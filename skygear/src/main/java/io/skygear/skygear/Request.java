@@ -98,7 +98,7 @@ public class Request implements Response.Listener<JSONObject>, Response.ErrorLis
      */
     public void onValidationError(Exception exception) {
         if (this.responseHandler != null) {
-            this.responseHandler.onFail(new Error(exception.getMessage()));
+            this.responseHandler.onFail(new Error(exception.getMessage(), exception));
         }
     }
 
@@ -120,16 +120,17 @@ public class Request implements Response.Listener<JSONObject>, Response.ErrorLis
     public void onErrorResponse(VolleyError error) {
         if (this.responseHandler != null) {
             Error requestError;
+
             if (error.networkResponse != null && error.networkResponse.data != null) {
                 String networkErrorString = new String(error.networkResponse.data);
                 try {
                     JSONObject errorObject = new JSONObject(networkErrorString).getJSONObject("error");
-                    requestError = ErrorSerializer.deserialize(errorObject);
+                    requestError = ErrorSerializer.deserialize(errorObject, error);
                 } catch (JSONException e) {
-                    requestError = new Error(networkErrorString);
+                    requestError = new Error(networkErrorString, error);
                 }
             } else {
-                requestError = new Error(error.getMessage());
+                requestError = new Error(error.getMessage(), error);
             }
 
             this.responseHandler.onFail(requestError);
